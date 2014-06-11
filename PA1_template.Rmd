@@ -2,19 +2,93 @@
 
 
 ## Loading and preprocessing the data
-
+```{r}
+fitdata<-read.csv("activity.csv")
+fitdata[,2]<-as.Date(fitdata[,2], format="%Y-%m-%d")
+```
 
 
 ## What is mean total number of steps taken per day?
+- The histogram  
 
+```{r}
+plot(fitdata[,2], fitdata[,1], type="h", lwd="5")
+```
+
+- The mean steps taken per day  
+
+```{r}
+sapply(split(fitdata[,1], fitdata[,2]), mean)
+```
+
+          
+- The median steps taken per day  
+
+```{r}
+sapply(split(fitdata[,1], fitdata[,2]), median)
+```
 
 
 ## What is the average daily activity pattern?
 
+Time series plot of 5-minute interval vs average number of steps taken
 
+```{r}
+fitdata<-fitdata[complete.cases(fitdata),]
+plot(unique(fitdata[,3]), sapply(split(fitdata[,1], fitdata[,3]), mean), type="l", ylim=c(0,250))
+```
 
+5-minute interval having the highest average steps taken per day
+
+```{r}
+temp=subset(fitdata, sapply(split(fitdata[,1], fitdata[,3]), mean)==max(sapply(split(fitdata[,1], fitdata[,3]), mean)))
+unique(temp[,3])
+```
 ## Imputing missing values
 
+Reloading the original file first containing NA values
+```{r}
+fitdata<-read.csv("activity.csv")
+fitdata[,2]<-as.Date(fitdata[,2], format="%Y-%m-%d")
+```
 
+Then, find the number of rows containing missing values
+```{r}
+temp<-fitdata[complete.cases(fitdata),]
+length(fitdata[,1])-length(temp[,1])
+```
+
+Creation of the new dataset. Logic is that the missing values
+are replaced by the average of the number of steps taken over the entire two months
+
+```{r}
+fitdata[is.na(fitdata)]=floor(mean(fitdata[,1], na.rm=TRUE))
+```
+
+The histogram, means and medians with missing values replaced
+
+```{r}
+plot(fitdata[,2], fitdata[,1], type="h", lwd="5")
+sapply(split(fitdata[,1], fitdata[,2]), mean)
+sapply(split(fitdata[,1], fitdata[,2]), median)
+```
+
+Because of using the logic given above, not much changes
+in the dataset except that the mean and median of the days with NA values
+previously increases
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Let's first create the two separate subsets
+```{r}
+fitdata$day<-weekdays(fitdata[,2])
+wkds<-subset(fitdata, fitdata[,4]!="Saturday" & fitdata[,4]!="Sunday")
+wkes<-subset(fitdata, fitdata[,4]=="Saturday" | fitdata[,4]=="Sunday")
+```
+
+Then, we plot the timeseries with the new datasets(after setting the mfrow appropriately)
+```{r}
+par(mfrow=c(2,1))
+plot(unique(wkds[,3]), sapply(split(wkds[,1], wkds[,3]), mean), type="l", ylim=c(0,200))
+plot(unique(wkes[,3]), sapply(split(wkes[,1], wkes[,3]), mean), type="l", ylim=c(0,200))
+```
